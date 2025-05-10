@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import time
+from security import safe_command
 
 GIT = os.getenv('GIT', 'git')
 
@@ -32,7 +33,7 @@ def tree_sha512sum(commit='HEAD'):
     files.sort()
     # open connection to git-cat-file in batch mode to request data for all blobs
     # this is much faster than launching it per file
-    p = subprocess.Popen([GIT, 'cat-file', '--batch'], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = safe_command.run(subprocess.Popen, [GIT, 'cat-file', '--batch'], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     overall = hashlib.sha512()
     for f in files:
         blob = blob_by_name[f]
@@ -116,7 +117,7 @@ def main():
             sys.exit(0)
         else:
             # Make sure this commit isn't older than trusted roots
-            check_root_older_res = subprocess.run([GIT, "merge-base", "--is-ancestor", verified_root, current_commit])
+            check_root_older_res = safe_command.run(subprocess.run, [GIT, "merge-base", "--is-ancestor", verified_root, current_commit])
             if check_root_older_res.returncode != 0:
                 print(f"\"{current_commit}\" predates the trusted root, stopping!")
                 sys.exit(0)
@@ -128,7 +129,7 @@ def main():
                 no_sha1 = False
             else:
                 # Skip the tree check if we are older than the trusted root
-                check_root_older_res = subprocess.run([GIT, "merge-base", "--is-ancestor", verified_sha512_root, current_commit])
+                check_root_older_res = safe_command.run(subprocess.run, [GIT, "merge-base", "--is-ancestor", verified_sha512_root, current_commit])
                 if check_root_older_res.returncode != 0:
                     print(f"\"{current_commit}\" predates the trusted SHA512 root, disabling tree verification.")
                     verify_tree = False
@@ -140,7 +141,7 @@ def main():
 
         # Check that the commit (and parents) was signed with a trusted key
         valid_sig = False
-        verify_res = subprocess.run([GIT, '-c', 'gpg.program={}/gpg.sh'.format(dirname), 'verify-commit', "--raw", current_commit], capture_output=True)
+        verify_res = safe_command.run(subprocess.run, [GIT, '-c', 'gpg.program={}/gpg.sh'.format(dirname), 'verify-commit', "--raw", current_commit], capture_output=True)
         for line in verify_res.stderr.decode().splitlines():
             if line.startswith("[GNUPG:] VALIDSIG "):
                 key = line.split(" ")[-1]
@@ -154,7 +155,7 @@ def main():
                 print("Parents are:", file=sys.stderr)
                 parents = subprocess.check_output([GIT, 'show', '-s', '--format=format:%P', prev_commit]).decode('utf8').splitlines()[0].split(' ')
                 for parent in parents:
-                    subprocess.call([GIT, 'show', '-s', parent], stdout=sys.stderr)
+                    safe_command.run(subprocess.call, [GIT, 'show', '-s', parent], stdout=sys.stderr)
             else:
                 print("{} was not signed with a trusted key!".format(current_commit), file=sys.stderr)
             sys.exit(1)
@@ -194,7 +195,7 @@ def main():
 
             if current_tree != recreated_tree:
                 print("Merge commit {} is not clean".format(current_commit), file=sys.stderr)
-                subprocess.call([GIT, 'diff', recreated_tree, current_tree])
+                safe_command.run(subprocess.call, [GIT, 'diff', recreated_tree, current_tree])
                 sys.exit(1)
 
         prev_commit = current_commit

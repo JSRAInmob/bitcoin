@@ -44,6 +44,7 @@ import urllib.error
 import enum
 from hashlib import sha256
 from pathlib import PurePath, Path
+from security import safe_command
 
 # The primary host; this will fail if we can't retrieve files from here.
 HOST1 = "https://bitcoincore.org"
@@ -139,7 +140,7 @@ def verify_with_gpg(
             '--output', output_filename if output_filename else '', signature_filename, filename]
 
         env = dict(os.environ, LANGUAGE='en')
-        result = subprocess.run(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env)
+        result = safe_command.run(subprocess.run, args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env)
 
         gpg_data = status_file.read().decode().rstrip()
 
