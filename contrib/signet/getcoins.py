@@ -8,7 +8,7 @@ import io
 import requests
 import subprocess
 import sys
-import xml.etree.ElementTree
+import defusedxml.ElementTree
 
 DEFAULT_GLOBAL_FAUCET = 'https://signetfaucet.com/claim'
 DEFAULT_GLOBAL_CAPTCHA = 'https://signetfaucet.com/captcha'
@@ -123,7 +123,7 @@ if args.captcha != '': # Retrieve a captcha
         raise SystemExit(f"Unexpected error when contacting faucet: {e}")
 
     # Size limitation
-    svg = xml.etree.ElementTree.fromstring(res.content)
+    svg = defusedxml.ElementTree.fromstring(res.content)
     if svg.attrib.get('width') != '150' or svg.attrib.get('height') != '50':
         raise SystemExit("Captcha size doesn't match expected dimensions 150x50")
 
