@@ -8,12 +8,12 @@ This module provides the ASNEntry and ASMap classes.
 
 import copy
 import ipaddress
-import random
 import unittest
 from collections.abc import Callable, Iterable
 from enum import Enum
 from functools import total_ordering
 from typing import Optional, Union, overload
+import secrets
 
 def net_to_prefix(net: Union[ipaddress.IPv4Network,ipaddress.IPv6Network]) -> list[bool]:
     """
@@ -453,7 +453,7 @@ class ASMap:
         leaves = [trie]
         ret = ASMap()
         for i in range(1, num_leaves):
-            idx = random.randrange(i)
+            idx = secrets.SystemRandom().randrange(i)
             leaf = leaves[idx]
             lastleaf = leaves.pop()
             if idx + 1 < i:
@@ -463,8 +463,8 @@ class ASMap:
             leaves.append(leaf[0])
             leaves.append(leaf[1])
         for leaf in leaves:
-            if random.random() >= unassigned_prob:
-                leaf.append(random.randrange(1, max_asn + 1))
+            if secrets.SystemRandom().random() >= unassigned_prob:
+                leaf.append(secrets.SystemRandom().randrange(1, max_asn + 1))
             else:
                 leaf.append(0)
         #pylint: disable=protected-access
@@ -691,7 +691,7 @@ class TestASMap(unittest.TestCase):
     def test_ipv6_prefix_roundtrips(self) -> None:
         """Test that random IPv6 network ranges roundtrip through prefix encoding."""
         for _ in range(20):
-            net_bits = random.getrandbits(128)
+            net_bits = secrets.SystemRandom().getrandbits(128)
             for prefix_len in range(0, 129):
                 masked_bits = (net_bits >> (128 - prefix_len)) << (128 - prefix_len)
                 net = ipaddress.IPv6Network((masked_bits.to_bytes(16, 'big'), prefix_len))
@@ -703,7 +703,7 @@ class TestASMap(unittest.TestCase):
     def test_ipv4_prefix_roundtrips(self) -> None:
         """Test that random IPv4 network ranges roundtrip through prefix encoding."""
         for _ in range(100):
-            net_bits = random.getrandbits(32)
+            net_bits = secrets.SystemRandom().getrandbits(32)
             for prefix_len in range(0, 33):
                 masked_bits = (net_bits >> (32 - prefix_len)) << (32 - prefix_len)
                 net = ipaddress.IPv4Network((masked_bits.to_bytes(4, 'big'), prefix_len))
@@ -727,12 +727,12 @@ class TestASMap(unittest.TestCase):
                     # for overlapping and non-overlapping ones.
                     for overlapping in [False, True]:
                         entries = asmap.to_entries(overlapping=overlapping, fill=False)
-                        random.shuffle(entries)
+                        secrets.SystemRandom().shuffle(entries)
                         asmap2 = ASMap(entries)
                         assert asmap2 is not None
                         self.assertEqual(asmap2, asmap)
                         entries = asmap.to_entries(overlapping=overlapping, fill=True)
-                        random.shuffle(entries)
+                        secrets.SystemRandom().shuffle(entries)
                         asmap2 = ASMap(entries)
                         assert asmap2 is not None
                         self.assertTrue(asmap2.extends(asmap))
@@ -770,9 +770,9 @@ class TestASMap(unittest.TestCase):
                     for _ in range(0, 5):
                         # Construct a random path and new ASN to assign it to, apply it to patched,
                         # and remember it in patches.
-                        pathlen = random.randrange(5)
-                        path = [random.getrandbits(1) != 0 for _ in range(pathlen)]
-                        newasn = random.randrange(1 + (1 << asnbits))
+                        pathlen = secrets.SystemRandom().randrange(5)
+                        path = [secrets.SystemRandom().getrandbits(1) != 0 for _ in range(pathlen)]
+                        newasn = secrets.SystemRandom().randrange(1 + (1 << asnbits))
                         patched.update(path, newasn)
                         patches = [(path, newasn)] + patches
 
@@ -797,7 +797,7 @@ class TestASMap(unittest.TestCase):
                                 # range, and check the lookup holds there too.
                                 spec_path = list(path)
                                 while len(spec_path) < 32:
-                                    spec_path.append(random.getrandbits(1) != 0)
+                                    spec_path.append(secrets.SystemRandom().getrandbits(1) != 0)
                                 self.assertEqual(asmap.lookup(spec_path), old_asn)
                                 self.assertEqual(patched.lookup(spec_path), new_asn)
                                 # Search through the list of performed patches to find the last one

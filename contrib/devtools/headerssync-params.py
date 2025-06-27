@@ -7,7 +7,7 @@
 
 from math import log, exp, sqrt
 from datetime import datetime, timedelta
-import random
+import secrets
 
 # Parameters:
 
@@ -297,7 +297,7 @@ def optimize(when):
         if len(periods) == 0:
             break
         # Pick a random remaining option for period size, and compute corresponding bufsize.
-        period = periods.pop(random.randrange(len(periods)))
+        period = periods.pop(secrets.SystemRandom().randrange(len(periods)))
         # The buffer size (at a given attack level) cannot shrink as the period grows. Find the
         # largest period smaller than the selected one we know the buffer size for, and use that
         # as a lower bound to find_bufsize.

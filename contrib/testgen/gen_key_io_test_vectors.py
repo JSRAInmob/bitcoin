@@ -8,8 +8,8 @@ Generate valid and invalid base58/bech32(m) address and private key test vectors
 
 from itertools import islice
 import os
-import random
 import sys
+import secrets
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../test/functional'))
 
@@ -174,7 +174,7 @@ def gen_invalid_base58_vector(template):
         prefix = bytearray(template[0])
 
     if randomize_payload_size:
-        payload = rand_bytes(size=max(int(random.expovariate(0.5)), 50))
+        payload = rand_bytes(size=max(int(secrets.SystemRandom().expovariate(0.5)), 50))
     else:
         payload = rand_bytes(size=template[1])
 
@@ -185,12 +185,12 @@ def gen_invalid_base58_vector(template):
 
     assert len(prefix) == 1
     val = byte_to_base58(payload + suffix, prefix[0])
-    if random.randint(0,10)<1: # line corruption
+    if secrets.SystemRandom().randint(0,10)<1: # line corruption
         if randbool(): # add random character to end
-            val += random.choice(b58chars)
+            val += secrets.choice(b58chars)
         else: # replace random character in the middle
-            n = random.randint(0, len(val))
-            val = val[0:n] + random.choice(b58chars) + val[n+1:]
+            n = secrets.SystemRandom().randint(0, len(val))
+            val = val[0:n] + secrets.choice(b58chars) + val[n+1:]
 
     return val
 
@@ -215,10 +215,10 @@ def gen_invalid_bech32_vector(template):
         rv = bech32_encode(encoding, hrp, data)
 
     if template[5]:
-        i = len(rv) - random.randrange(1, 7)
-        rv = rv[:i] + random.choice(CHARSET.replace(rv[i], '')) + rv[i + 1:]
+        i = len(rv) - secrets.SystemRandom().randrange(1, 7)
+        rv = rv[:i] + secrets.choice(CHARSET.replace(rv[i], '')) + rv[i + 1:]
     if template[6]:
-        i = len(hrp) + 1 + random.randrange(0, len(rv) - len(hrp) - 4)
+        i = len(hrp) + 1 + secrets.SystemRandom().randrange(0, len(rv) - len(hrp) - 4)
         rv = rv[:i] + rv[i:i + 4].upper() + rv[i + 4:]
 
     if to_upper:
@@ -228,10 +228,10 @@ def gen_invalid_bech32_vector(template):
 
 def randbool(p = 0.5):
     '''Return True with P(p)'''
-    return random.random() < p
+    return secrets.SystemRandom().random() < p
 
 def rand_bytes(*, size):
-    return bytearray(random.getrandbits(8) for _ in range(size))
+    return bytearray(secrets.SystemRandom().getrandbits(8) for _ in range(size))
 
 def gen_invalid_vectors():
     '''Generate invalid test vectors'''
@@ -249,7 +249,7 @@ def gen_invalid_vectors():
 if __name__ == '__main__':
     import json
     iters = {'valid':gen_valid_vectors, 'invalid':gen_invalid_vectors}
-    random.seed(42)
+    secrets.SystemRandom().seed(42)
     try:
         uiter = iters[sys.argv[1]]
     except IndexError:

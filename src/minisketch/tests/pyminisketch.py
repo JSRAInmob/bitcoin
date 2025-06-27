@@ -4,9 +4,8 @@
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 """Native Python (slow) reimplementation of libminisketch' algorithms."""
-
-import random
 import unittest
+import secrets
 
 # Irreducible polynomials over GF(2) to use (represented as integers).
 #
@@ -144,8 +143,8 @@ class TestGF2Ops(unittest.TestCase):
 
         gf = GF2Ops(field_size)
         for i in range(100):
-            x = random.randrange(1 << field_size)
-            y = random.randrange(1 << field_size)
+            x = secrets.SystemRandom().randrange(1 << field_size)
+            y = secrets.SystemRandom().randrange(1 << field_size)
             x2 = gf.mul2(x)
             xy = gf.mul(x, y)
             self.assertEqual(x2, gf.mul(x, 2)) # mul2(x) == x*2
@@ -307,7 +306,7 @@ def poly_find_roots(poly, gf):
         return rec_split(factor1, randv) + rec_split(factor2, randv)
 
     # Invoke the recursive splitting with a random initial factor, and sort the results.
-    return sorted(rec_split(poly, random.randrange(1, 1 << gf.field_size)))
+    return sorted(rec_split(poly, secrets.SystemRandom().randrange(1, 1 << gf.field_size)))
 
 class TestPolyFindRoots(unittest.TestCase):
     """Test class for poly_find_roots."""
@@ -316,7 +315,7 @@ class TestPolyFindRoots(unittest.TestCase):
         """Run tests for given field_size."""
         gf = GF2Ops(field_size)
         for test_size in [0, 1, 2, 3, 10]:
-            roots = [random.randrange(1 << field_size) for _ in range(test_size)]
+            roots = [secrets.SystemRandom().randrange(1 << field_size) for _ in range(test_size)]
             roots_set = set(roots)
             # Construct a polynomial with all elements of roots as roots (with multiplicity).
             poly = [1]
@@ -467,21 +466,21 @@ class TestMinisketch(unittest.TestCase):
         # Simulate random.sample here (which doesn't work with ranges over 2**63).
         for _ in range(num_a_only + num_b_only + num_both):
             while True:
-                r = random.randrange(1, 1 << field_size)
+                r = secrets.SystemRandom().randrange(1, 1 << field_size)
                 if r not in sample:
                     sample.append(r)
                     break
         full_a = sample[:num_a_only + num_both]
         full_b = sample[num_a_only:]
-        random.shuffle(full_a)
-        random.shuffle(full_b)
+        secrets.SystemRandom().shuffle(full_a)
+        secrets.SystemRandom().shuffle(full_b)
         return full_a, full_b
 
     def field_size_capacity_test(self, field_size, capacity):
         """Test Minisketch methods for a specific field and capacity."""
-        used_capacity = random.randrange(capacity + 1)
-        num_a = random.randrange(used_capacity + 1)
-        num_both = random.randrange(min(2 * capacity, (1 << field_size) - 1 - used_capacity) + 1)
+        used_capacity = secrets.SystemRandom().randrange(capacity + 1)
+        num_a = secrets.SystemRandom().randrange(used_capacity + 1)
+        num_both = secrets.SystemRandom().randrange(min(2 * capacity, (1 << field_size) - 1 - used_capacity) + 1)
         full_a, full_b = self.construct_data(field_size, num_a, used_capacity - num_a, num_both)
         sketch_a = Minisketch(field_size, capacity)
         sketch_b = Minisketch(field_size, capacity)
