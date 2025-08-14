@@ -9,6 +9,7 @@ import requests
 import subprocess
 import sys
 import xml.etree.ElementTree
+from security import safe_command
 
 DEFAULT_GLOBAL_FAUCET = 'https://signetfaucet.com/claim'
 DEFAULT_GLOBAL_CAPTCHA = 'https://signetfaucet.com/captcha'
@@ -129,7 +130,7 @@ if args.captcha != '': # Retrieve a captcha
 
     # Convert SVG image to PPM, and load it
     try:
-        rv = subprocess.run([args.imagemagick, 'svg:-', '-depth', '8', 'ppm:-'], input=res.content, check=True, capture_output=True)
+        rv = safe_command.run(subprocess.run, [args.imagemagick, 'svg:-', '-depth', '8', 'ppm:-'], input=res.content, check=True, capture_output=True)
     except FileNotFoundError:
         raise SystemExit(f"The binary {args.imagemagick} could not be found. Please make sure ImageMagick (or a compatible fork) is installed and that the correct path is specified.")
 
