@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import argparse
+from security import safe_command
 
 BINARIES = [
 'bin/bitcoind',
@@ -36,7 +37,7 @@ help2man = os.getenv('HELP2MAN', 'help2man')
 # If not otherwise specified, get top directory from git.
 topdir = os.getenv('TOPDIR')
 if not topdir:
-    r = subprocess.run([git, 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE, check=True, text=True)
+    r = safe_command.run(subprocess.run, [git, 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE, check=True, text=True)
     topdir = r.stdout.rstrip()
 
 # Get input and output directories.
@@ -49,7 +50,7 @@ versions = []
 for relpath in BINARIES:
     abspath = os.path.join(builddir, relpath)
     try:
-        r = subprocess.run([abspath, "--version"], stdout=subprocess.PIPE, check=True, text=True)
+        r = safe_command.run(subprocess.run, [abspath, "--version"], stdout=subprocess.PIPE, check=True, text=True)
     except IOError:
         if(args.skip_missing_binaries):
             print(f'{abspath} not found or not an executable. Skipping...', file=sys.stderr)
@@ -93,4 +94,4 @@ with tempfile.NamedTemporaryFile('w', suffix='.h2m') as footer:
     for (abspath, verstr, _) in versions:
         outname = os.path.join(mandir, os.path.basename(abspath) + '.1')
         print(f'Generating {outname}…')
-        subprocess.run([help2man, '-N', '--version-string=' + verstr, '--include=' + footer.name, '-o', outname, abspath], check=True)
+        safe_command.run(subprocess.run, [help2man, '-N', '--version-string=' + verstr, '--include=' + footer.name, '-o', outname, abspath], check=True)

@@ -30,6 +30,7 @@ import subprocess
 import sys
 
 from io import StringIO
+from security import safe_command
 
 
 def main():
@@ -150,8 +151,7 @@ def main():
             command.extend(["-fallback-style", args.fallback_style])
 
         try:
-            p = subprocess.Popen(
-                command,
+            p = safe_command.run(subprocess.Popen, command,
                 stdout=subprocess.PIPE,
                 stderr=None,
                 stdin=subprocess.PIPE,

@@ -4,6 +4,7 @@ import json
 import sys
 import subprocess
 from pathlib import Path
+from security import safe_command
 
 
 def main():
@@ -51,8 +52,7 @@ def run_verify(global_args: str, command: str, command_args: str) -> subprocess.
     if command == "pub":
         command += " --cleanup"
 
-    return subprocess.run(
-        f"{path} {global_args} {command} {command_args}",
+    return safe_command.run(subprocess.run, f"{path} {global_args} {command} {command_args}",
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
 

@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 import operator
 import os
 import sys
+from security import safe_command
 
 OUT_CPP="qt/bitcoinstrings.cpp"
 EMPTY=['""']
@@ -58,7 +59,7 @@ if not XGETTEXT:
     print('Cannot extract strings: xgettext utility is not installed or not configured.',file=sys.stderr)
     print('Please install package "gettext" and re-run \'cmake -B build\'.',file=sys.stderr)
     sys.exit(1)
-child = Popen([XGETTEXT,'--output=-','--from-code=utf-8','-n','--keyword=_'] + files, stdout=PIPE)
+child = safe_command.run(Popen, [XGETTEXT,'--output=-','--from-code=utf-8','-n','--keyword=_'] + files, stdout=PIPE)
 (out, err) = child.communicate()
 
 messages = parse_po(out.decode('utf-8'))
